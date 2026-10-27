@@ -1,0 +1,37 @@
+
+# ============================================================
+# TACTUS v1.4.0 - NSC Freja Native CMake Compilation
+# HarmonieCSC / IAL / Intel 2023a
+# Compilation: Native CMake R64 (double precision)
+# ============================================================
+
+# ============================================================
+# Enable compilation suite
+# ============================================================
+
+[suite_control]
+  compile = true
+
+# ============================================================
+# Freja compiler and executable paths
+# ============================================================
+
+[submission]
+  compiler = "intel"
+  arch = "nsc/freja/intel/2023a"
+  bindir = "@CASEDIR@/native-cmake/install/bin"
+
+# ============================================================
+# Forecast executable override
+# ============================================================
+
+[submission.task_exceptions.Forecast.binaries.MASTERODB]
+  bindir = "@CASEDIR@/native-cmake/install/bin"
+
+# ============================================================
+# Native CMake compilation configuration
+# ============================================================
+
+[compile]
+  arch_dir = "@CASEDIR@/IAL/bundle/arch"
+  bundle_file = "native-cmake"

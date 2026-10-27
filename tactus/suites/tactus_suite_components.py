@@ -2076,6 +2076,19 @@ class CompilationFamily(EcflowSuiteFamily):
             ecf_files_remotely=ecf_files_remotely,
         )
 
+        # Opt-in native HarmonieCSC CMake compilation; standard ecBundle is unchanged.
+        if config["compile.bundle_file"] == "native-cmake":
+            EcflowSuiteTask(
+                "NativeCMakeBuild",
+                self,
+                config,
+                task_settings,
+                ecf_files,
+                input_template=input_template,
+                ecf_files_remotely=ecf_files_remotely,
+                trigger=EcflowSuiteTriggers(EcflowSuiteTrigger(clone_ial)),
+            )
+            return
         create_bundle = EcflowSuiteTask(
             "TactusBundleCreate",
             self,

@@ -1,3 +1,9 @@
+# ============================================================
+# TACTUS v1.4.0 - NSC Freja submission configuration
+# Python 3.10.4 / GDAL 3.5.0 / ecFlow Python 5.12.4
+# Slurm account: accord
+# ============================================================
+
 [submission]
   account = "#SBATCH -A accord"
   bindir = "/nobackup/smhid19/proj/accord/sm_uandr/hm_home/dev_CY46h1_deode/bin/R64"
@@ -5,6 +11,10 @@
   lfftw = true
   module_initfile = "/software/sse2/init/nsc_lmod_init.sh"
   nproma = -32
+
+# ============================================================
+# I/O merge settings
+# ============================================================
 
 [submission.iomerge.age_limit]
   fullpos = 15
@@ -16,9 +26,17 @@
   history = -1
   surfex = 0
 
+# ============================================================
+# Background tasks
+# ============================================================
+
 [submission.types.background]
   SCHOST = "localhost"
   tasks = []
+
+# ============================================================
+# Parallel model tasks
+# ============================================================
 
 [submission.types.parallel]
   NPROC = 32
@@ -37,15 +55,17 @@
   OMPI_MCA_btl = "^vader"
 
 [submission.types.parallel.MODULES]
-  # First load the prgenv
   PRGENV = ["load", "prgenv/intel"]
-  # The rest
   ECMWFTOOLBOX = ["load", "ecmwf-toolbox/2021.08.3.0"]
   FFTW = ["load", "fftw/3.3.9"]
   HDF5 = ["load", "hdf5/1.10.6"]
   MKL = ["load", "intel-mkl/19.0.5"]
   NETCDF = ["load", "netcdf4/4.7.4"]
   OPENMPI = ["load", "openmpi/4.1.1.1"]
+
+# ============================================================
+# Serial tasks: Topography, Soil, PGD, PREP, etc.
+# ============================================================
 
 [submission.types.serial]
   NPROC = 1
@@ -70,15 +90,31 @@
   NTASKS = "#SBATCH --ntasks=1"
   WALLTIME = "#SBATCH --time=00:15:00"
 
+# ============================================================
+# Serial runtime environment
+# ============================================================
+
 [submission.types.serial.ENV]
   DR_HOOK_IGNORE_SIGNALS = -1
   OMP_NUM_THREADS = 1
   OMPI_MCA_btl = "^vader"
 
+  # GDAL 3.5.0 and ecFlow 5.12.4 Python bindings
+  PYTHONPATH = "/software/sse2/freja_el9/easybuild/pure/software/GDAL/3.5.0-foss-2022a/lib/python3.10/site-packages:/software/sse2/freja_el9/manual/ecflow/5.12.4/hpc1-mamba-py3.10.4/lib/python3.10/site-packages:$PYTHONPATH"
+
+# ============================================================
+# Serial software modules
+# ============================================================
+
 [submission.types.serial.MODULES]
-  # First load the prgenv
   00_PRGENV = ["-q", "purge"]
-  01_ECCODES = ["load", "eccodes-utils/2.32.0-ENABLE-AEC-hpc1-intel-2023a-eb"]
+  01_PYTHON = ["load", "Python/3.10.4-bare-hpc1-gcc-2022a-eb"]
+  02_GDAL = ["load", "GDAL/3.5.0-hpc1-gcc-2022a-eb"]
+  03_ECCODES = ["load", "eccodes-utils/2.32.0-ENABLE-AEC-hpc1-intel-2023a-eb"]
+
+# ============================================================
+# Task-specific settings
+# ============================================================
 
 [submission.types.task]
   wrapper = ""
@@ -86,3 +122,52 @@
 [submission.types.task_exceptions.Pgd.BATCH]
   MEMORY = "#SBATCH --mem=64GB"
   WALLTIME = "#SBATCH --time=00:30:00"
+
+# ============================================================
+# Native CMake compilation - dedicated Freja submission type
+# TACTUS task: NativeCMakeBuild
+# Intel 2023a / R64 native CMake
+# Does not change the serial or parallel task assignments
+# ============================================================
+
+[submission.types.native_cmake]
+  NPROC = 1
+  NPROCX = 1
+  NPROCY = 1
+  SCHOST = "freja"
+  tasks = ["NativeCMakeBuild"]
+  WRAPPER = "mpprun"
+
+# ============================================================
+# Native CMake Slurm allocation
+# ============================================================
+
+[submission.types.native_cmake.BATCH]
+  MEMORY = "#SBATCH --mem=64GB"
+  NAME = "#SBATCH --job-name=@TASK_NAME@"
+  NODES = "#SBATCH --nodes=1"
+  NTASKS = "#SBATCH --ntasks=1"
+  CPUS_PER_TASK = "#SBATCH --cpus-per-task=8"
+  WALLTIME = "#SBATCH --time=08:00:00"
+
+# ============================================================
+# Native CMake runtime environment
+# ============================================================
+
+[submission.types.native_cmake.ENV]
+  DR_HOOK_IGNORE_SIGNALS = -1
+  OMP_NUM_THREADS = 1
+  OMPI_MCA_btl = "^vader"
+  PYTHONPATH = "/software/sse2/freja_el9/easybuild/pure/software/GDAL/3.5.0-foss-2022a/lib/python3.10/site-packages:/software/sse2/freja_el9/manual/ecflow/5.12.4/hpc1-mamba-py3.10.4/lib/python3.10/site-packages:$PYTHONPATH"
+
+# ============================================================
+# Native CMake task modules
+# The compilation script loads Intel, CMake, FFTW, NetCDF,
+# ecCodes, ecbuild and Fypp inside the Slurm allocation.
+# ============================================================
+
+[submission.types.native_cmake.MODULES]
+  00_PRGENV = ["-q", "purge"]
+  01_PYTHON = ["load", "Python/3.10.4-bare-hpc1-gcc-2022a-eb"]
+  02_GDAL = ["load", "GDAL/3.5.0-hpc1-gcc-2022a-eb"]
+  03_ECCODES = ["load", "eccodes-utils/2.32.0-ENABLE-AEC-hpc1-intel-2023a-eb"]
