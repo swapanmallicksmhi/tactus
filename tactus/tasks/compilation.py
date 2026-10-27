@@ -284,3 +284,22 @@ class TactusBundleBuild(Task):
                 self.install_dir,
                 self.local_install_dir,
             )
+
+
+class NativeCMakeBuild(Task):
+    """Compile a checked-out HarmonieCSC repository using native CMake on Freja."""
+
+    def __init__(self, config):
+        Task.__init__(self, config, __class__.__name__)
+        self.ial_dir = self.platform.substitute(self.config["compile.ial_dir"])
+        self.case_dir = self.platform.substitute("@CASEDIR@")
+
+    def execute(self):
+        from subprocess import run
+        script = Path(__file__).resolve().parents[1] / "data/compilation/native_cmake_freja.sh"
+        if not script.is_file():
+            raise FileNotFoundError(script)
+        env = os.environ.copy()
+        env.update({"IAL_DIR": self.ial_dir, "NATIVE_CASE_DIR": self.case_dir})
+        logger.info("Native CMake build: source={} case={}", self.ial_dir, self.case_dir)
+        run(["bash", str(script)], env=env, check=True)
